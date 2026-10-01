@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from datetime import date
 from pathlib import Path
 
@@ -10,13 +11,18 @@ import streamlit as st
 from dotenv import load_dotenv
 from PIL import Image, UnidentifiedImageError
 
+# Streamlit may launch this file with only the frontend directory on sys.path.
+# Add the project root before importing sibling packages so direct-path launches work.
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from document_utils.docx_generator import generate_docx
 from document_utils.offline_generator import generate_offline_draft
 from document_utils.pdf_generator import generate_pdf
 from document_utils.txt_generator import generate_txt
 from frontend.ui_components import render_document_preview
 
-ROOT = Path(__file__).resolve().parents[1]
 load_dotenv(ROOT / ".env")
 BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000").rstrip("/")
 DOCUMENT_TYPES = [
