@@ -48,6 +48,9 @@ st.markdown("""
   .disclaimer { background:#fff8e9; border:1px solid #f1dfb7; border-left:4px solid #c39845;
     border-radius:9px; padding:13px 16px; color:#5c4d31; font-size:.9rem; }
   .muted { color:#657789; }
+  [data-testid="stTextArea"] textarea { background-color:#ffffff !important; color:#1f2937 !important;
+    -webkit-text-fill-color:#1f2937 !important; opacity:1 !important; caret-color:#183b56 !important; }
+  [data-testid="stTextArea"] textarea::placeholder { color:#64748b !important; -webkit-text-fill-color:#64748b !important; opacity:1 !important; }
 </style>
 """, unsafe_allow_html=True)
 
