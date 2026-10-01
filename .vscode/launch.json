@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "LegalEase API (FastAPI)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["backend.main:app", "--reload"],
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "LegalEase UI (Streamlit)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "streamlit",
+      "args": ["run", "frontend/app.py"],
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    }
+  ],
+  "compounds": [
+    {
+      "name": "LegalEase (API + UI)",
+      "configurations": ["LegalEase API (FastAPI)", "LegalEase UI (Streamlit)"],
+      "stopAll": true
+    }
+  ]
+}
