@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from PIL import Image, UnidentifiedImageError
 
 from document_utils.docx_generator import generate_docx
+from document_utils.offline_generator import generate_offline_draft
 from document_utils.pdf_generator import generate_pdf
 from document_utils.txt_generator import generate_txt
 from frontend.ui_components import render_document_preview
@@ -25,15 +26,14 @@ DOCUMENT_TYPES = [
     "Consulting Agreement", "Custom Legal Document",
 ]
 DISCLAIMER = (
-    "LegalEase generates AI-assisted legal documents for informational and drafting purposes. "
+    "LegalEase creates fill-in templates and optional AI-assisted drafts for informational and drafting purposes. "
     "It does not provide legal advice. Users should consult a qualified legal professional "
     "for legal advice and jurisdiction-specific review."
 )
 
-st.set_page_config(page_title="LegalEase | AI Legal Document Generator", page_icon="⚖️", layout="wide")
+st.set_page_config(page_title="LegalEase | Legal Document Generator", page_icon="⚖️", layout="wide")
 st.markdown("""
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
   .stApp { background: linear-gradient(180deg,#f5f8fb 0%,#ffffff 48%); color:#243447; }
   .block-container { max-width:1180px; padding-top:2.1rem; padding-bottom:3rem; }
   h1,h2,h3 { color:#183b56; }
@@ -59,11 +59,22 @@ st.markdown("""
 <div class="hero">
   <div class="eyebrow">Draft with clarity</div>
   <h1>Start with a clearer draft.</h1>
-  <p>AI-Powered Legal Document Generator · Turn your terms into a clear first draft.</p>
+  <p>Legal Document Generator · Format your agreed terms into a clear first draft.</p>
 </div>
 """, unsafe_allow_html=True)
 st.markdown(f'<div class="disclaimer">⚠️ {DISCLAIMER}</div>', unsafe_allow_html=True)
 st.write("")
+draft_mode = st.radio(
+    "Draft generation mode",
+    ["Offline template (no API)", "Gemini AI (API key required)"],
+    index=0,
+    horizontal=True,
+    help="Offline mode formats only the information you provide and works without an API key or internet access.",
+)
+if draft_mode.startswith("Offline"):
+    st.caption("Offline mode: no AI service or external API is contacted. The app formats your supplied facts and leaves unspecified terms as placeholders.")
+else:
+    st.caption("Gemini AI mode sends your entered details to Google's Gemini API through your local backend.")
 
 left, right = st.columns([0.92, 1.08], gap="large")
 with left:
@@ -117,27 +128,38 @@ with left:
                 "effective_date": effective_date.isoformat(),
                 "additional_details": details,
             }
-            with st.spinner("Drafting your document securely through the LegalEase backend…"):
+            if draft_mode.startswith("Offline"):
                 try:
-                    response = requests.post(f"{BACKEND_URL}/generate", json=payload, timeout=180)
+                    st.session_state["edited_document"] = generate_offline_draft(
+                        doc_type, parties, terms, effective_date.isoformat(), details
+                    )
+                    st.session_state["document_type"] = doc_type
+                    st.session_state["logo_bytes"] = logo_bytes
+                    st.success("Your offline template is ready. Complete its placeholders and review it before downloading.")
+                except ValueError as exc:
+                    st.error(str(exc))
+            else:
+                with st.spinner("Drafting your document through the configured Gemini backend…"):
                     try:
-                        result = response.json()
-                    except ValueError:
-                        result = {}
-                    if response.ok and result.get("success") and result.get("content"):
-                        st.session_state["edited_document"] = result["content"]
-                        st.session_state["document_type"] = doc_type
-                        st.session_state["logo_bytes"] = logo_bytes
-                        st.success("Your draft is ready. Review and edit it before downloading.")
-                    else:
-                        message = result.get("detail") or f"Backend returned HTTP {response.status_code}."
-                        st.error(message)
-                except requests.exceptions.ConnectionError:
-                    st.error(f"Could not connect to the backend at {BACKEND_URL}. Start FastAPI in another terminal and try again.")
-                except requests.exceptions.Timeout:
-                    st.error("The request timed out. The model may still be processing; please retry or check the backend.")
-                except requests.RequestException:
-                    st.error("A network error interrupted document generation. Please check your connection and retry.")
+                        response = requests.post(f"{BACKEND_URL}/generate", json=payload, timeout=180)
+                        try:
+                            result = response.json()
+                        except ValueError:
+                            result = {}
+                        if response.ok and result.get("success") and result.get("content"):
+                            st.session_state["edited_document"] = result["content"]
+                            st.session_state["document_type"] = doc_type
+                            st.session_state["logo_bytes"] = logo_bytes
+                            st.success("Your draft is ready. Review and edit it before downloading.")
+                        else:
+                            message = result.get("detail") or f"Backend returned HTTP {response.status_code}."
+                            st.error(message)
+                    except requests.exceptions.ConnectionError:
+                        st.error(f"Could not connect to the backend at {BACKEND_URL}. Start FastAPI in another terminal and try again.")
+                    except requests.exceptions.Timeout:
+                        st.error("The request timed out. The model may still be processing; please retry or check the backend.")
+                    except requests.RequestException:
+                        st.error("A network error interrupted document generation. Please check your connection and retry.")
 
 with right:
     st.subheader("Your draft")

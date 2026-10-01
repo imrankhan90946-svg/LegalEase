@@ -1,16 +1,15 @@
-"""Beginner-friendly command helper. Start backend and frontend in separate terminals."""
+"""Print beginner-friendly commands for the offline app and optional Gemini mode."""
 
 
 def main() -> None:
-    print("LegalEase local development\n")
-    print("Open two VS Code terminals from the project root.")
-    print("Terminal 1 — FastAPI backend:")
+    print("LegalEase — offline mode (no API key required)\n")
+    print("From the project root, run:")
+    print("  python -m streamlit run frontend/app.py")
+    print("\nOpen the Local URL Streamlit prints (usually http://localhost:8501).")
+    print("Keep 'Offline template (no API)' selected to avoid all external API calls.")
+    print("\nOptional Gemini AI mode requires GEMINI_API_KEY in .env and a second terminal:")
     print("  uvicorn backend.main:app --reload")
-    print("\nTerminal 2 — Streamlit frontend:")
-    print("  streamlit run frontend/app.py")
-    print("\nAPI docs: http://127.0.0.1:8000/docs")
-    print("App UI:   http://localhost:8501")
-    print("\nMake sure .env exists and GEMINI_API_KEY is set before generating drafts.")
+    print("Then select 'Gemini AI (API key required)' in the app.")
 
 
 if __name__ == "__main__":
